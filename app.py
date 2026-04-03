@@ -204,8 +204,7 @@ elif product_group == "가정용 평판":
     vinyl_cost = st.number_input("비닐 금액(원)", min_value=0.0, value=0.0, step=100.0, key="flat_vinyl")
     air_through_cost = st.number_input("에어스루 금액(원)", min_value=0.0, value=0.0, step=100.0, key="flat_air")
     box_cost = st.number_input("박스 금액(원)", min_value=0.0, value=0.0, step=100.0, key="flat_box")
-    nonwoven_cost = st.number_input("부직포 금액(원)", min_value=0.0, value=0.0, step=100.0, key="flat_print")
-
+   
     st.subheader("비율 설정")
     r1, r2, r3, r4, r5 = st.columns(5)
     with r1:
