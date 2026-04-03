@@ -240,7 +240,7 @@ elif product_group == "가정용 평판":
         band_hotmelt_weight_kg = band_hotmelt_area * 2
         band_hotmelt_cost = band_hotmelt_weight_kg * hotmelt_unit_cost
 
-        others = deodorant_cost + gasket_cost + print_nonwoven_cost + vinyl_cost + air_through_cost + box_cost
+        others = deodorant_cost + gasket_cost + print_cost + vinyl_cost + air_through_cost + box_cost
         material_cost = media_cost + hotmelt_cost + band_cost + band_hotmelt_cost + frame_cost + others
 
         loss_cost = material_cost * (loss_rate / 100)
