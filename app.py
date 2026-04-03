@@ -194,10 +194,11 @@ elif product_group == "가정용 평판":
     st.subheader("가정용 평판 부자재")
     deodorant_cost = st.number_input("탈취 금액(원)", min_value=0.0, value=0.0, step=100.0)
     gasket_cost = st.number_input("가스켓 금액(원)", min_value=0.0, value=0.0, step=100.0)
-    print_nonwoven_cost = st.number_input("인쇄부직포 금액(원)", min_value=0.0, value=0.0, step=100.0)
+    print_cost = st.number_input("인쇄 금액(원)", min_value=0.0, value=0.0, step=100.0)
     vinyl_cost = st.number_input("비닐 금액(원)", min_value=0.0, value=0.0, step=100.0)
     air_through_cost = st.number_input("에어스루 금액(원)", min_value=0.0, value=0.0, step=100.0)
     box_cost = st.number_input("박스 금액(원)", min_value=0.0, value=0.0, step=100.0)
+    nonwoven_cost = st.number_input("부직포 금액(원)", min_value=0.0, value=0.0, step=100.0)
 
     st.subheader("비율 설정")
     r1, r2, r3, r4, r5 = st.columns(5)
