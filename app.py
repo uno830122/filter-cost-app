@@ -72,12 +72,12 @@ if product_group == "산업용":
     st.subheader("부자재")
     s1, s2 = st.columns(2)
     with s1:
-        sub1_name = st.text_input("부자재1 이름", value="탈취")
-        sub2_name = st.text_input("부자재2 이름", value="가스켓")
-        sub3_name = st.text_input("부자재3 이름", value="인쇄부직포")
-        sub4_name = st.text_input("부자재4 이름", value="비닐")
-        sub5_name = st.text_input("부자재5 이름", value="에어스루")
-        sub6_name = st.text_input("부자재6 이름", value="박스")
+        sub1_name = st.text_input("부자재1 이름", value="가스켓")
+        sub2_name = st.text_input("부자재2 이름", value="보강대")
+        sub3_name = st.text_input("부자재3 이름", value="망")
+        sub4_name = st.text_input("부자재4 이름", value="부자재")
+        sub5_name = st.text_input("부자재5 이름", value="부자재")
+        sub6_name = st.text_input("부자재6 이름", value="부자재")
     with s2:
         sub1_cost = st.number_input("부자재1 금액(원)", min_value=0.0, value=0.0, step=100.0)
         sub2_cost = st.number_input("부자재2 금액(원)", min_value=0.0, value=0.0, step=100.0)
@@ -195,15 +195,16 @@ elif product_group == "가정용 평판":
         depth = st.number_input("두께(mm)", min_value=0.0, value=20.0, step=1.0, key="flat_depth")
     with c2:
         pleat_count = st.number_input("산수", min_value=0.0, value=50.0, step=1.0, key="flat_pleat")
-        frame_cost = st.number_input("프레임 단가(원)", min_value=0.0, value=0.0, step=100.0, key="flat_frame")
+        frame_cost = st.number_input("띠지프레임 단가(원)", min_value=0.0, value=0.0, step=100.0, key="flat_frame")
 
     st.subheader("가정용 평판 부자재")
     deodorant_cost = st.number_input("탈취 금액(원)", min_value=0.0, value=0.0, step=100.0, key="flat_deo")
     gasket_cost = st.number_input("가스켓 금액(원)", min_value=0.0, value=0.0, step=100.0, key="flat_gasket")
-    print_nonwoven_cost = st.number_input("인쇄부직포 금액(원)", min_value=0.0, value=0.0, step=100.0, key="flat_print")
+    print_cost = st.number_input("인쇄 금액(원)", min_value=0.0, value=0.0, step=100.0, key="flat_print")
     vinyl_cost = st.number_input("비닐 금액(원)", min_value=0.0, value=0.0, step=100.0, key="flat_vinyl")
     air_through_cost = st.number_input("에어스루 금액(원)", min_value=0.0, value=0.0, step=100.0, key="flat_air")
     box_cost = st.number_input("박스 금액(원)", min_value=0.0, value=0.0, step=100.0, key="flat_box")
+    nonwoven_cost = st.number_input("부직포 금액(원)", min_value=0.0, value=0.0, step=100.0, key="flat_print")
 
     st.subheader("비율 설정")
     r1, r2, r3, r4, r5 = st.columns(5)
