@@ -24,15 +24,16 @@ product_group = st.radio(
     horizontal=True,
 )
 
-# -----------------------------
-# 산업용
-# -----------------------------
+# =========================================================
+# 1) 산업용 : 기존 구조 그대로 유지
+# =========================================================
 if product_group == "산업용":
-    st.subheader("산업용 설정")
+    st.subheader("기본 선택")
+    grade_type = st.radio("등급 선택", ["미디움", "헤파"], horizontal=True)
     filter_type = st.radio("필터 타입", ["MINI", "SEPARATOR"], horizontal=True)
     media_type = st.radio("여재 종류", ["SYNTHETIC", "GLASS"], horizontal=True)
 
-    st.markdown("### 원재료 원가설정")
+    st.subheader("원재료 원가설정")
     col1, col2 = st.columns(2)
 
     with col1:
@@ -53,29 +54,30 @@ if product_group == "산업용":
             foil_unit_cost = st.number_input("호일 단가 (원/kg)", min_value=0.0, value=8500.0, step=100.0)
             hotmelt_unit_cost = 0.0
 
-    st.markdown("### 기본 입력")
+    st.subheader("기본 입력")
     c1, c2 = st.columns(2)
     with c1:
         width = st.number_input("가로(mm)", min_value=0.0, value=594.0, step=1.0)
         height = st.number_input("세로(mm)", min_value=0.0, value=594.0, step=1.0)
         depth = st.number_input("두께(mm)", min_value=0.0, value=75.0, step=1.0)
         pleat_count = st.number_input("산수", min_value=0.0, value=100.0, step=1.0)
-        pack_depth = st.number_input("팩두께(mm)", min_value=0.0, value=30.0, step=1.0)
     with c2:
+        pack_depth = st.number_input("팩두께(mm)", min_value=0.0, value=30.0, step=1.0)
         pack_height = st.number_input("팩높이(mm)", min_value=0.0, value=594.0, step=1.0)
         frame_cost = st.number_input("프레임 단가(원)", min_value=0.0, value=0.0, step=100.0)
         box_cost = st.number_input("박스 비용(원)", min_value=0.0, value=2000.0, step=100.0)
-        vinyl_cost = st.number_input("비닐 비용(원)", min_value=0.0, value=500.0, step=100.0)
 
-    st.markdown("### 부자재")
+    vinyl_cost = st.number_input("비닐 비용(원)", min_value=0.0, value=500.0, step=100.0)
+
+    st.subheader("부자재")
     s1, s2 = st.columns(2)
     with s1:
-        sub1_name = st.text_input("부자재1 이름", value="박스")
+        sub1_name = st.text_input("부자재1 이름", value="탈취")
         sub2_name = st.text_input("부자재2 이름", value="가스켓")
-        sub3_name = st.text_input("부자재3 이름", value="비닐")
-        sub4_name = st.text_input("부자재4 이름", value="기타")
-        sub5_name = st.text_input("부자재5 이름", value="기타")
-        sub6_name = st.text_input("부자재6 이름", value="기타")
+        sub3_name = st.text_input("부자재3 이름", value="인쇄부직포")
+        sub4_name = st.text_input("부자재4 이름", value="비닐")
+        sub5_name = st.text_input("부자재5 이름", value="에어스루")
+        sub6_name = st.text_input("부자재6 이름", value="박스")
     with s2:
         sub1_cost = st.number_input("부자재1 금액(원)", min_value=0.0, value=0.0, step=100.0)
         sub2_cost = st.number_input("부자재2 금액(원)", min_value=0.0, value=0.0, step=100.0)
@@ -84,7 +86,7 @@ if product_group == "산업용":
         sub5_cost = st.number_input("부자재5 금액(원)", min_value=0.0, value=0.0, step=100.0)
         sub6_cost = st.number_input("부자재6 금액(원)", min_value=0.0, value=0.0, step=100.0)
 
-    st.markdown("### 비율 설정")
+    st.subheader("비율 설정")
     r1, r2, r3, r4, r5 = st.columns(5)
     with r1:
         loss_rate = st.number_input("로스(%)", min_value=0.0, value=5.0, step=1.0)
@@ -99,6 +101,7 @@ if product_group == "산업용":
 
     if st.button("산업용 계산하기", use_container_width=True):
         media_area = (pleat_count * 2 * pack_depth * pack_height) / 1_000_000
+
         if media_type == "SYNTHETIC":
             media_weight = 0.0
             media_cost = media_area * synthetic_unit_cost
@@ -121,6 +124,8 @@ if product_group == "산업용":
         urethane_area = (width * depth * 2) / 1_000_000
         urethane_weight = urethane_area * 12
         urethane_cost = urethane_weight * urethane_unit_cost
+        if grade_type == "미디움":
+            urethane_cost = urethane_cost / 3
 
         hotmelt_lines = 0
         hotmelt_length_m = 0.0
@@ -144,7 +149,8 @@ if product_group == "산업용":
         total_cost = subtotal_after_loss + labor_cost + sgna_cost + interest_cost
         selling_price = total_cost * (1 + margin_rate / 100)
 
-        st.markdown("### 계산 결과")
+        st.subheader("산업용 계산 결과")
+        st.write(f"등급선택: {grade_type}")
         st.write(f"여재 계산식: {media_formula}")
         st.write(f"여재면적: {media_area:.4f} ㎡")
         st.write(f"여재무게: {media_weight:.4f} kg" if media_type == "GLASS" else "여재무게: -")
@@ -171,34 +177,33 @@ if product_group == "산업용":
         st.write(f"총원가: {money(total_cost)}")
         st.success(f"판매가: {money(selling_price)}")
 
-# -----------------------------
-# 가정용 평판
-# -----------------------------
+# =========================================================
+# 2) 가정용 평판 : 산업용과 완전 분리
+# =========================================================
 elif product_group == "가정용 평판":
     st.subheader("가정용 평판 원가설정")
-    media_unit_cost = st.number_input("원단 단가 (원/㎡)", min_value=0.0, value=12000.0, step=100.0)
-    hotmelt_unit_cost = st.number_input("핫멜트 단가 (원/kg)", min_value=0.0, value=3900.0, step=100.0)
-    band_unit_cost = st.number_input("띠밴드 단가 (원/m)", min_value=0.0, value=500.0, step=10.0)
-    band_width_mm = st.number_input("띠밴드 폭 (mm)", min_value=0.0, value=20.0, step=1.0)
+    media_unit_cost = st.number_input("원단 단가 (원/㎡)", min_value=0.0, value=12000.0, step=100.0, key="flat_media")
+    hotmelt_unit_cost = st.number_input("핫멜트 단가 (원/kg)", min_value=0.0, value=3900.0, step=100.0, key="flat_hotmelt")
+    band_unit_cost = st.number_input("띠밴드 단가 (원/m)", min_value=0.0, value=500.0, step=10.0, key="flat_band")
+    band_width_mm = st.number_input("띠밴드 폭 (mm)", min_value=0.0, value=20.0, step=1.0, key="flat_band_width")
 
     st.subheader("가정용 평판 기본 입력")
     c1, c2 = st.columns(2)
     with c1:
-        width = st.number_input("가로(mm)", min_value=0.0, value=300.0, step=1.0)
-        height = st.number_input("세로(mm)", min_value=0.0, value=300.0, step=1.0)
-        depth = st.number_input("두께(mm)", min_value=0.0, value=20.0, step=1.0)
+        width = st.number_input("가로(mm)", min_value=0.0, value=300.0, step=1.0, key="flat_width")
+        height = st.number_input("세로(mm)", min_value=0.0, value=300.0, step=1.0, key="flat_height")
+        depth = st.number_input("두께(mm)", min_value=0.0, value=20.0, step=1.0, key="flat_depth")
     with c2:
-        pleat_count = st.number_input("산수", min_value=0.0, value=50.0, step=1.0)
-        frame_cost = st.number_input("프레임 단가(원)", min_value=0.0, value=0.0, step=100.0)
+        pleat_count = st.number_input("산수", min_value=0.0, value=50.0, step=1.0, key="flat_pleat")
+        frame_cost = st.number_input("프레임 단가(원)", min_value=0.0, value=0.0, step=100.0, key="flat_frame")
 
     st.subheader("가정용 평판 부자재")
-    deodorant_cost = st.number_input("탈취 금액(원)", min_value=0.0, value=0.0, step=100.0)
-    gasket_cost = st.number_input("가스켓 금액(원)", min_value=0.0, value=0.0, step=100.0)
-    print_cost = st.number_input("인쇄 금액(원)", min_value=0.0, value=0.0, step=100.0)
-    vinyl_cost = st.number_input("비닐 금액(원)", min_value=0.0, value=0.0, step=100.0)
-    air_through_cost = st.number_input("에어스루 금액(원)", min_value=0.0, value=0.0, step=100.0)
-    box_cost = st.number_input("박스 금액(원)", min_value=0.0, value=0.0, step=100.0)
-    nonwoven_cost = st.number_input("부직포 금액(원)", min_value=0.0, value=0.0, step=100.0)
+    deodorant_cost = st.number_input("탈취 금액(원)", min_value=0.0, value=0.0, step=100.0, key="flat_deo")
+    gasket_cost = st.number_input("가스켓 금액(원)", min_value=0.0, value=0.0, step=100.0, key="flat_gasket")
+    print_nonwoven_cost = st.number_input("인쇄부직포 금액(원)", min_value=0.0, value=0.0, step=100.0, key="flat_print")
+    vinyl_cost = st.number_input("비닐 금액(원)", min_value=0.0, value=0.0, step=100.0, key="flat_vinyl")
+    air_through_cost = st.number_input("에어스루 금액(원)", min_value=0.0, value=0.0, step=100.0, key="flat_air")
+    box_cost = st.number_input("박스 금액(원)", min_value=0.0, value=0.0, step=100.0, key="flat_box")
 
     st.subheader("비율 설정")
     r1, r2, r3, r4, r5 = st.columns(5)
@@ -246,7 +251,7 @@ elif product_group == "가정용 평판":
         total_cost = subtotal_after_loss + labor_cost + sgna_cost + interest_cost
         selling_price = total_cost * (1 + margin_rate / 100)
 
-        st.markdown("### 계산 결과")
+        st.subheader("가정용 평판 계산 결과")
         st.write(f"팩 가로: {pack_width:.0f} mm")
         st.write(f"팩 세로: {pack_height:.0f} mm")
         st.write(f"팩 두께: {pack_depth:.0f} mm")
@@ -267,9 +272,9 @@ elif product_group == "가정용 평판":
         st.write(f"총원가: {money(total_cost)}")
         st.success(f"판매가: {money(selling_price)}")
 
-# -----------------------------
-# 가정용 원형
-# -----------------------------
+# =========================================================
+# 3) 가정용 원형 : 산업용과 완전 분리
+# =========================================================
 else:
     st.subheader("가정용 원형 원가설정")
     media_unit_cost = st.number_input("원단 단가 (원/㎡)", min_value=0.0, value=12000.0, step=100.0, key="cyl_media")
@@ -328,7 +333,7 @@ else:
         total_cost = subtotal_after_loss + labor_cost + sgna_cost + interest_cost
         selling_price = total_cost * (1 + margin_rate / 100)
 
-        st.markdown("### 계산 결과")
+        st.subheader("가정용 원형 계산 결과")
         st.write(f"원단면적: {media_area:.4f} ㎡")
         st.write(f"원단원가: {money(media_cost)}")
         st.write(f"핫멜트 라인수: {hotmelt_lines}")
