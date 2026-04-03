@@ -1,524 +1,344 @@
-export default function FilterCostMobileApp() {
-  const React = window.React;
-  const { useMemo, useState } = React;
+import math
+import streamlit as st
 
-  const [productGroup, setProductGroup] = useState("INDUSTRIAL");
-  const [filterType, setFilterType] = useState("MINI");
-  const [mediaType, setMediaType] = useState("SYNTHETIC");
+st.set_page_config(page_title="필터 원가 계산기", layout="centered")
 
-  const [industrial, setIndustrial] = useState({
-    width: "594",
-    height: "594",
-    depth: "75",
-    pleatCount: "100",
-    packDepth: "30",
-    packHeight: "594",
-    frameCost: "0",
-    boxCost: "2000",
-    vinylCost: "500",
-    sub1Name: "탈취",
-    sub1Cost: "",
-    sub2Name: "가스켓",
-    sub2Cost: "",
-    sub3Name: "인쇄부직포",
-    sub3Cost: "",
-    sub4Name: "비닐",
-    sub4Cost: "",
-    sub5Name: "에어스루",
-    sub5Cost: "",
-    sub6Name: "박스",
-    sub6Cost: "",
-    lossRate: "5",
-    laborRate: "30",
-    sgnaRate: "15",
-    interestRate: "9",
-    marginRate: "20",
-    syntheticUnitCost: "12000",
-    glassUnitCost: "8500",
-    urethaneUnitCost: "3700",
-    hotmeltUnitCost: "3900",
-    foilUnitCost: "8500",
-  });
 
-  const [flat, setFlat] = useState({
-    width: "300",
-    height: "300",
-    depth: "20",
-    pleatCount: "50",
-    mediaUnitCost: "12000",
-    hotmeltUnitCost: "3900",
-    bandUnitCost: "500",
-    bandWidthMm: "20",
-    frameCost: "0",
-    lossRate: "5",
-    laborRate: "30",
-    sgnaRate: "15",
-    interestRate: "9",
-    marginRate: "20",
-    deodorantCost: "0",
-    gasketCost: "0",
-    printNonwovenCost: "0",
-    vinylCost: "0",
-    airThroughCost: "0",
-    boxCost: "0",
-  });
+def money(v: float) -> str:
+    return f"{round(v):,} 원"
 
-  const [cyl, setCyl] = useState({
-    width: "300",
-    height: "300",
-    depth: "20",
-    pleatCount: "50",
-    mediaUnitCost: "12000",
-    hotmeltUnitCost: "3900",
-    lossRate: "5",
-    laborRate: "30",
-    sgnaRate: "15",
-    interestRate: "9",
-    marginRate: "20",
-    gasketCost: "0",
-    honeycombCost: "0",
-    carbonNonwovenCost: "0",
-    meshCost: "0",
-    capCost: "0",
-    airThroughCost: "0",
-    vinylCost: "0",
-    boxCost: "0",
-  });
 
-  const num = (v, d = 0) => {
-    const s = String(v ?? "").trim();
-    if (!s) return d;
-    const n = Number(s.replace(/,/g, ""));
-    return Number.isFinite(n) ? n : d;
-  };
+def separator_unit_weight(depth: float):
+    if depth == 292:
+        return 0.0198
+    if depth == 150:
+        return 0.01
+    return None
 
-  const setIndustrialField = (key, value) => setIndustrial((prev) => ({ ...prev, [key]: value }));
-  const setFlatField = (key, value) => setFlat((prev) => ({ ...prev, [key]: value }));
-  const setCylField = (key, value) => setCyl((prev) => ({ ...prev, [key]: value }));
 
-  const industrialResults = useMemo(() => {
-    const width = num(industrial.width);
-    const height = num(industrial.height);
-    const depth = num(industrial.depth);
-    const pleatCount = num(industrial.pleatCount);
-    const packDepth = num(industrial.packDepth);
-    const packHeight = num(industrial.packHeight);
-    const frameCost = num(industrial.frameCost);
-    const boxCost = num(industrial.boxCost);
-    const vinylCost = num(industrial.vinylCost);
-    const sub1Cost = num(industrial.sub1Cost);
-    const sub2Cost = num(industrial.sub2Cost);
-    const sub3Cost = num(industrial.sub3Cost);
-    const sub4Cost = num(industrial.sub4Cost);
-    const sub5Cost = num(industrial.sub5Cost);
-    const sub6Cost = num(industrial.sub6Cost);
-    const lossRate = num(industrial.lossRate);
-    const laborRate = num(industrial.laborRate);
-    const sgnaRate = num(industrial.sgnaRate);
-    const interestRate = num(industrial.interestRate);
-    const marginRate = num(industrial.marginRate);
-    const syntheticUnitCost = num(industrial.syntheticUnitCost);
-    const glassUnitCost = num(industrial.glassUnitCost);
-    const urethaneUnitCost = num(industrial.urethaneUnitCost);
-    const hotmeltUnitCost = num(industrial.hotmeltUnitCost);
-    const foilUnitCost = num(industrial.foilUnitCost);
+st.title("필터 원가 계산기")
 
-    const mediaArea = (pleatCount * 2 * packDepth * packHeight) / 1_000_000;
-    let mediaWeight = 0;
-    let mediaCost = 0;
-    let mediaFormula = "";
+product_group = st.radio(
+    "제품군 선택",
+    ["산업용", "가정용 평판", "가정용 원형"],
+    horizontal=True,
+)
 
-    if (mediaType === "SYNTHETIC") {
-      mediaCost = mediaArea * syntheticUnitCost;
-      mediaFormula = "SYNTHETIC: 면적 × 신세틱 단가(원/㎡)";
-    } else {
-      mediaWeight = mediaArea * 0.08;
-      mediaCost = mediaWeight * glassUnitCost;
-      mediaFormula = "GLASS: 면적 × 0.08kg/㎡ × 글라스 단가(원/kg)";
-    }
+# -----------------------------
+# 산업용
+# -----------------------------
+if product_group == "산업용":
+    st.subheader("산업용 설정")
+    filter_type = st.radio("필터 타입", ["MINI", "SEPARATOR"], horizontal=True)
+    media_type = st.radio("여재 종류", ["SYNTHETIC", "GLASS"], horizontal=True)
 
-    let foilWeight = 0;
-    let foilCost = 0;
-    let separatorError = "";
-    if (filterType === "SEPARATOR") {
-      let unitWeight = 0;
-      if (depth === 292) unitWeight = 0.0198;
-      else if (depth === 150) unitWeight = 0.01;
-      else separatorError = "SEPARATOR TYPE은 두께 150 또는 292만 지원합니다.";
-      foilWeight = pleatCount * 2 * unitWeight;
-      foilCost = foilWeight * foilUnitCost;
-    }
+    st.markdown("### 원재료 원가설정")
+    col1, col2 = st.columns(2)
 
-    const urethaneArea = (width * depth * 2) / 1_000_000;
-    const urethaneWeight = urethaneArea * 12;
-    const urethaneCost = urethaneWeight * urethaneUnitCost;
+    with col1:
+        if media_type == "SYNTHETIC":
+            synthetic_unit_cost = st.number_input("신세틱 원단 단가 (원/㎡)", min_value=0.0, value=12000.0, step=100.0)
+            glass_unit_cost = 0.0
+        else:
+            glass_unit_cost = st.number_input("글라스 원단 단가 (원/kg)", min_value=0.0, value=8500.0, step=100.0)
+            synthetic_unit_cost = 0.0
 
-    let hotmeltLines = 0;
-    let hotmeltLengthM = 0;
-    let hotmeltWeightG = 0;
-    let hotmeltCost = 0;
-    if (filterType === "MINI") {
-      hotmeltLines = height > 0 ? Math.ceil(height / 25) : 0;
-      const hotmeltLengthMm = hotmeltLines * pleatCount * depth;
-      hotmeltLengthM = hotmeltLengthMm / 1000;
-      hotmeltWeightG = hotmeltLengthM * 2;
-      hotmeltCost = (hotmeltWeightG / 1000) * hotmeltUnitCost;
-    }
+        urethane_unit_cost = st.number_input("우레탄 단가 (원/kg)", min_value=0.0, value=3700.0, step=100.0)
 
-    const subTotal = sub1Cost + sub2Cost + sub3Cost + sub4Cost + sub5Cost + sub6Cost;
-    const materialCost = mediaCost + foilCost + urethaneCost + hotmeltCost + frameCost + boxCost + vinylCost + subTotal;
-    const lossCost = materialCost * (lossRate / 100);
-    const subtotalAfterLoss = materialCost + lossCost;
-    const laborCost = subtotalAfterLoss * (laborRate / 100);
-    const sgnaCost = subtotalAfterLoss * (sgnaRate / 100);
-    const interestCost = subtotalAfterLoss * (interestRate / 100);
-    const totalCost = subtotalAfterLoss + laborCost + sgnaCost + interestCost;
-    const sellingPrice = totalCost * (1 + marginRate / 100);
+    with col2:
+        if filter_type == "MINI":
+            hotmelt_unit_cost = st.number_input("핫멜트 단가 (원/kg)", min_value=0.0, value=3900.0, step=100.0)
+            foil_unit_cost = 0.0
+        else:
+            foil_unit_cost = st.number_input("호일 단가 (원/kg)", min_value=0.0, value=8500.0, step=100.0)
+            hotmelt_unit_cost = 0.0
 
-    return { separatorError, mediaArea, mediaWeight, mediaCost, mediaFormula, foilWeight, foilCost, urethaneArea, urethaneWeight, urethaneCost, hotmeltLines, hotmeltLengthM, hotmeltWeightG, hotmeltCost, frameCost, subTotal, materialCost, lossCost, laborCost, sgnaCost, interestCost, totalCost, sellingPrice };
-  }, [industrial, filterType, mediaType]);
+    st.markdown("### 기본 입력")
+    c1, c2 = st.columns(2)
+    with c1:
+        width = st.number_input("가로(mm)", min_value=0.0, value=594.0, step=1.0)
+        height = st.number_input("세로(mm)", min_value=0.0, value=594.0, step=1.0)
+        depth = st.number_input("두께(mm)", min_value=0.0, value=75.0, step=1.0)
+        pleat_count = st.number_input("산수", min_value=0.0, value=100.0, step=1.0)
+        pack_depth = st.number_input("팩두께(mm)", min_value=0.0, value=30.0, step=1.0)
+    with c2:
+        pack_height = st.number_input("팩높이(mm)", min_value=0.0, value=594.0, step=1.0)
+        frame_cost = st.number_input("프레임 단가(원)", min_value=0.0, value=0.0, step=100.0)
+        box_cost = st.number_input("박스 비용(원)", min_value=0.0, value=2000.0, step=100.0)
+        vinyl_cost = st.number_input("비닐 비용(원)", min_value=0.0, value=500.0, step=100.0)
 
-  const flatResults = useMemo(() => {
-    const width = num(flat.width);
-    const height = num(flat.height);
-    const depth = num(flat.depth);
-    const pleatCount = num(flat.pleatCount);
-    const mediaUnitCost = num(flat.mediaUnitCost);
-    const hotmeltUnitCost = num(flat.hotmeltUnitCost);
-    const bandUnitCost = num(flat.bandUnitCost);
-    const bandWidthMm = num(flat.bandWidthMm);
-    const frameCost = num(flat.frameCost);
-    const lossRate = num(flat.lossRate);
-    const laborRate = num(flat.laborRate);
-    const sgnaRate = num(flat.sgnaRate);
-    const interestRate = num(flat.interestRate);
-    const marginRate = num(flat.marginRate);
-    const others = num(flat.deodorantCost)+num(flat.gasketCost)+num(flat.printNonwovenCost)+num(flat.vinylCost)+num(flat.airThroughCost)+num(flat.boxCost);
+    st.markdown("### 부자재")
+    s1, s2 = st.columns(2)
+    with s1:
+        sub1_name = st.text_input("부자재1 이름", value="탈취")
+        sub2_name = st.text_input("부자재2 이름", value="가스켓")
+        sub3_name = st.text_input("부자재3 이름", value="인쇄부직포")
+        sub4_name = st.text_input("부자재4 이름", value="비닐")
+        sub5_name = st.text_input("부자재5 이름", value="에어스루")
+        sub6_name = st.text_input("부자재6 이름", value="박스")
+    with s2:
+        sub1_cost = st.number_input("부자재1 금액(원)", min_value=0.0, value=0.0, step=100.0)
+        sub2_cost = st.number_input("부자재2 금액(원)", min_value=0.0, value=0.0, step=100.0)
+        sub3_cost = st.number_input("부자재3 금액(원)", min_value=0.0, value=0.0, step=100.0)
+        sub4_cost = st.number_input("부자재4 금액(원)", min_value=0.0, value=0.0, step=100.0)
+        sub5_cost = st.number_input("부자재5 금액(원)", min_value=0.0, value=0.0, step=100.0)
+        sub6_cost = st.number_input("부자재6 금액(원)", min_value=0.0, value=0.0, step=100.0)
 
-    const packWidth = Math.max(width - 2, 0);
-    const packHeight = Math.max(height - 2, 0);
-    const packDepth = Math.max(depth - 2, 0);
+    st.markdown("### 비율 설정")
+    r1, r2, r3, r4, r5 = st.columns(5)
+    with r1:
+        loss_rate = st.number_input("로스(%)", min_value=0.0, value=5.0, step=1.0)
+    with r2:
+        labor_rate = st.number_input("인건비(%)", min_value=0.0, value=30.0, step=1.0)
+    with r3:
+        sgna_rate = st.number_input("판관비(%)", min_value=0.0, value=15.0, step=1.0)
+    with r4:
+        interest_rate = st.number_input("이자비용(%)", min_value=0.0, value=9.0, step=1.0)
+    with r5:
+        margin_rate = st.number_input("마진(%)", min_value=0.0, value=20.0, step=1.0)
 
-    const mediaArea = (pleatCount * 2 * packHeight * packDepth) / 1_000_000;
-    const mediaCost = mediaArea * mediaUnitCost;
+    if st.button("산업용 계산하기", use_container_width=True):
+        media_area = (pleat_count * 2 * pack_depth * pack_height) / 1_000_000
+        if media_type == "SYNTHETIC":
+            media_weight = 0.0
+            media_cost = media_area * synthetic_unit_cost
+            media_formula = "SYNTHETIC: 면적 × 신세틱 단가(원/㎡)"
+        else:
+            media_weight = media_area * 0.08
+            media_cost = media_weight * glass_unit_cost
+            media_formula = "GLASS: 면적 × 0.08kg/㎡ × 글라스 단가(원/kg)"
 
-    const hotmeltLines = packHeight > 0 ? Math.ceil(packHeight / 25.4) : 0;
-    const hotmeltLengthMm = hotmeltLines * pleatCount * packDepth;
-    const hotmeltLengthM = hotmeltLengthMm / 1000;
-    const hotmeltWeightG = hotmeltLengthM * 2;
-    const hotmeltCost = (hotmeltWeightG / 1000) * hotmeltUnitCost;
+        foil_weight = 0.0
+        foil_cost = 0.0
+        if filter_type == "SEPARATOR":
+            unit = separator_unit_weight(depth)
+            if unit is None:
+                st.error("SEPARATOR TYPE은 두께 150 또는 292만 지원합니다.")
+                st.stop()
+            foil_weight = pleat_count * 2 * unit
+            foil_cost = foil_weight * foil_unit_cost
 
-    const bandLengthMm = 2 * (packWidth + packHeight);
-    const bandLengthM = bandLengthMm / 1000;
-    const bandCost = bandLengthM * bandUnitCost;
+        urethane_area = (width * depth * 2) / 1_000_000
+        urethane_weight = urethane_area * 12
+        urethane_cost = urethane_weight * urethane_unit_cost
 
-    const bandHotmeltArea = bandLengthM * (bandWidthMm / 1000);
-    const bandHotmeltWeightKg = bandHotmeltArea * 2;
-    const bandHotmeltCost = bandHotmeltWeightKg * hotmeltUnitCost;
+        hotmelt_lines = 0
+        hotmelt_length_m = 0.0
+        hotmelt_weight_g = 0.0
+        hotmelt_cost = 0.0
+        if filter_type == "MINI":
+            hotmelt_lines = math.ceil(height / 25) if height > 0 else 0
+            hotmelt_length_mm = hotmelt_lines * pleat_count * depth
+            hotmelt_length_m = hotmelt_length_mm / 1000
+            hotmelt_weight_g = hotmelt_length_m * 2
+            hotmelt_cost = (hotmelt_weight_g / 1000) * hotmelt_unit_cost
 
-    const materialCost = mediaCost + hotmeltCost + bandCost + bandHotmeltCost + frameCost + others;
-    const lossCost = materialCost * (lossRate / 100);
-    const subtotalAfterLoss = materialCost + lossCost;
-    const laborCost = subtotalAfterLoss * (laborRate / 100);
-    const sgnaCost = subtotalAfterLoss * (sgnaRate / 100);
-    const interestCost = subtotalAfterLoss * (interestRate / 100);
-    const totalCost = subtotalAfterLoss + laborCost + sgnaCost + interestCost;
-    const sellingPrice = totalCost * (1 + marginRate / 100);
+        sub_total = sub1_cost + sub2_cost + sub3_cost + sub4_cost + sub5_cost + sub6_cost
+        material_cost = media_cost + foil_cost + urethane_cost + hotmelt_cost + frame_cost + box_cost + vinyl_cost + sub_total
 
-    return { packWidth, packHeight, packDepth, mediaArea, mediaCost, hotmeltLines, hotmeltLengthM, hotmeltWeightG, hotmeltCost, bandLengthM, bandCost, bandHotmeltWeightKg, bandHotmeltCost, others, materialCost, lossCost, laborCost, sgnaCost, interestCost, totalCost, sellingPrice };
-  }, [flat]);
+        loss_cost = material_cost * (loss_rate / 100)
+        subtotal_after_loss = material_cost + loss_cost
+        labor_cost = subtotal_after_loss * (labor_rate / 100)
+        sgna_cost = subtotal_after_loss * (sgna_rate / 100)
+        interest_cost = subtotal_after_loss * (interest_rate / 100)
+        total_cost = subtotal_after_loss + labor_cost + sgna_cost + interest_cost
+        selling_price = total_cost * (1 + margin_rate / 100)
 
-  const cylResults = useMemo(() => {
-    const width = num(cyl.width);
-    const height = num(cyl.height);
-    const depth = num(cyl.depth);
-    const pleatCount = num(cyl.pleatCount);
-    const mediaUnitCost = num(cyl.mediaUnitCost);
-    const hotmeltUnitCost = num(cyl.hotmeltUnitCost);
-    const lossRate = num(cyl.lossRate);
-    const laborRate = num(cyl.laborRate);
-    const sgnaRate = num(cyl.sgnaRate);
-    const interestRate = num(cyl.interestRate);
-    const marginRate = num(cyl.marginRate);
+        st.markdown("### 계산 결과")
+        st.write(f"여재 계산식: {media_formula}")
+        st.write(f"여재면적: {media_area:.4f} ㎡")
+        st.write(f"여재무게: {media_weight:.4f} kg" if media_type == "GLASS" else "여재무게: -")
+        st.write(f"여재원가: {money(media_cost)}")
+        if filter_type == "SEPARATOR":
+            st.write(f"호일무게: {foil_weight:.4f} kg")
+            st.write(f"호일원가: {money(foil_cost)}")
+        st.write(f"우레탄원가: {money(urethane_cost)}")
+        if filter_type == "MINI":
+            st.write(f"핫멜트 라인수: {hotmelt_lines}")
+            st.write(f"핫멜트 길이: {hotmelt_length_m:.2f} m")
+            st.write(f"핫멜트 무게: {hotmelt_weight_g:.2f} g")
+            st.write(f"핫멜트원가: {money(hotmelt_cost)}")
+        st.write(f"프레임원가: {money(frame_cost)}")
+        st.write(f"부자재합: {money(sub_total)}")
+        st.caption(
+            f"재료비 검산 = 여재({money(media_cost)}) + 호일({money(foil_cost)}) + 우레탄({money(urethane_cost)}) + 핫멜트({money(hotmelt_cost)}) + 프레임({money(frame_cost)}) + 박스({money(box_cost)}) + 비닐({money(vinyl_cost)}) + 부자재합({money(sub_total)})"
+        )
+        st.write(f"재료비 합계: {money(material_cost)}")
+        st.write(f"로스비용: {money(loss_cost)}")
+        st.write(f"인건비: {money(labor_cost)}")
+        st.write(f"판관비: {money(sgna_cost)}")
+        st.write(f"이자비용: {money(interest_cost)}")
+        st.write(f"총원가: {money(total_cost)}")
+        st.success(f"판매가: {money(selling_price)}")
 
-    const mediaArea = (pleatCount * 2 * height * depth) / 1_000_000;
-    const mediaCost = mediaArea * mediaUnitCost;
+# -----------------------------
+# 가정용 평판
+# -----------------------------
+elif product_group == "가정용 평판":
+    st.subheader("가정용 평판 원가설정")
+    media_unit_cost = st.number_input("원단 단가 (원/㎡)", min_value=0.0, value=12000.0, step=100.0)
+    hotmelt_unit_cost = st.number_input("핫멜트 단가 (원/kg)", min_value=0.0, value=3900.0, step=100.0)
+    band_unit_cost = st.number_input("띠밴드 단가 (원/m)", min_value=0.0, value=500.0, step=10.0)
+    band_width_mm = st.number_input("띠밴드 폭 (mm)", min_value=0.0, value=20.0, step=1.0)
 
-    const hotmeltLines = height > 0 ? Math.ceil(height / 25) : 0;
-    const hotmeltLengthMm = hotmeltLines * pleatCount * depth;
-    const hotmeltLengthM = hotmeltLengthMm / 1000;
-    const hotmeltWeightG = hotmeltLengthM * 2;
-    const hotmeltCost = (hotmeltWeightG / 1000) * hotmeltUnitCost;
+    st.subheader("가정용 평판 기본 입력")
+    c1, c2 = st.columns(2)
+    with c1:
+        width = st.number_input("가로(mm)", min_value=0.0, value=300.0, step=1.0)
+        height = st.number_input("세로(mm)", min_value=0.0, value=300.0, step=1.0)
+        depth = st.number_input("두께(mm)", min_value=0.0, value=20.0, step=1.0)
+    with c2:
+        pleat_count = st.number_input("산수", min_value=0.0, value=50.0, step=1.0)
+        frame_cost = st.number_input("프레임 단가(원)", min_value=0.0, value=0.0, step=100.0)
 
-    const others = num(cyl.gasketCost)+num(cyl.honeycombCost)+num(cyl.carbonNonwovenCost)+num(cyl.meshCost)+num(cyl.capCost)+num(cyl.airThroughCost)+num(cyl.vinylCost)+num(cyl.boxCost);
+    st.subheader("가정용 평판 부자재")
+    deodorant_cost = st.number_input("탈취 금액(원)", min_value=0.0, value=0.0, step=100.0)
+    gasket_cost = st.number_input("가스켓 금액(원)", min_value=0.0, value=0.0, step=100.0)
+    print_nonwoven_cost = st.number_input("인쇄부직포 금액(원)", min_value=0.0, value=0.0, step=100.0)
+    vinyl_cost = st.number_input("비닐 금액(원)", min_value=0.0, value=0.0, step=100.0)
+    air_through_cost = st.number_input("에어스루 금액(원)", min_value=0.0, value=0.0, step=100.0)
+    box_cost = st.number_input("박스 금액(원)", min_value=0.0, value=0.0, step=100.0)
 
-    const materialCost = mediaCost + hotmeltCost + others;
-    const lossCost = materialCost * (lossRate / 100);
-    const subtotalAfterLoss = materialCost + lossCost;
-    const laborCost = subtotalAfterLoss * (laborRate / 100);
-    const sgnaCost = subtotalAfterLoss * (sgnaRate / 100);
-    const interestCost = subtotalAfterLoss * (interestRate / 100);
-    const totalCost = subtotalAfterLoss + laborCost + sgnaCost + interestCost;
-    const sellingPrice = totalCost * (1 + marginRate / 100);
+    st.subheader("비율 설정")
+    r1, r2, r3, r4, r5 = st.columns(5)
+    with r1:
+        loss_rate = st.number_input("로스(%)", min_value=0.0, value=5.0, step=1.0, key="flat_loss")
+    with r2:
+        labor_rate = st.number_input("인건비(%)", min_value=0.0, value=30.0, step=1.0, key="flat_labor")
+    with r3:
+        sgna_rate = st.number_input("판관비(%)", min_value=0.0, value=15.0, step=1.0, key="flat_sgna")
+    with r4:
+        interest_rate = st.number_input("이자비용(%)", min_value=0.0, value=9.0, step=1.0, key="flat_interest")
+    with r5:
+        margin_rate = st.number_input("마진(%)", min_value=0.0, value=20.0, step=1.0, key="flat_margin")
 
-    return { mediaArea, mediaCost, hotmeltLines, hotmeltLengthM, hotmeltWeightG, hotmeltCost, others, materialCost, lossCost, laborCost, sgnaCost, interestCost, totalCost, sellingPrice };
-  }, [cyl]);
+    if st.button("가정용 평판 계산하기", use_container_width=True):
+        pack_width = max(width - 2, 0)
+        pack_height = max(height - 2, 0)
+        pack_depth = max(depth - 2, 0)
 
-  const money = (n) => `${Math.round(n).toLocaleString()} 원`;
-  const fixed = (n, d = 2) => Number(n).toFixed(d);
+        media_area = (pleat_count * 2 * pack_height * pack_depth) / 1_000_000
+        media_cost = media_area * media_unit_cost
 
-  const Field = ({ label, value, onChange, placeholder = "", type = "number" }) => (
-    <label className="block">
-      <div className="mb-1 text-sm font-medium text-slate-700">{label}</div>
-      <input
-        type={type}
-        inputMode={type === "text" ? "text" : "decimal"}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-base shadow-sm outline-none transition focus:border-slate-500"
-      />
-    </label>
-  );
+        hotmelt_lines = math.ceil(pack_height / 25.4) if pack_height > 0 else 0
+        hotmelt_length_mm = hotmelt_lines * pleat_count * pack_depth
+        hotmelt_length_m = hotmelt_length_mm / 1000
+        hotmelt_weight_g = hotmelt_length_m * 2
+        hotmelt_cost = (hotmelt_weight_g / 1000) * hotmelt_unit_cost
 
-  const SegButton = ({ active, children, onClick }) => (
-    <button
-      onClick={onClick}
-      className={`flex-1 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-        active ? "bg-slate-900 text-white shadow" : "bg-white text-slate-700 border border-slate-200"
-      }`}
-    >
-      {children}
-    </button>
-  );
+        band_length_mm = 2 * (pack_width + pack_height)
+        band_length_m = band_length_mm / 1000
+        band_cost = band_length_m * band_unit_cost
 
-  const Card = ({ title, children }) => (
-    <section className="rounded-3xl bg-white p-4 shadow-sm border border-slate-200">
-      <h2 className="mb-4 text-base font-bold text-slate-900">{title}</h2>
-      <div className="space-y-3">{children}</div>
-    </section>
-  );
+        band_hotmelt_area = band_length_m * (band_width_mm / 1000)
+        band_hotmelt_weight_kg = band_hotmelt_area * 2
+        band_hotmelt_cost = band_hotmelt_weight_kg * hotmelt_unit_cost
 
-  const Row = ({ label, value, strong = false }) => (
-    <div className="flex items-start justify-between gap-4 py-1">
-      <div className={`text-sm ${strong ? "font-semibold text-slate-900" : "text-slate-600"}`}>{label}</div>
-      <div className={`text-right text-sm ${strong ? "font-bold text-slate-900" : "text-slate-800"}`}>{value}</div>
-    </div>
-  );
+        others = deodorant_cost + gasket_cost + print_nonwoven_cost + vinyl_cost + air_through_cost + box_cost
+        material_cost = media_cost + hotmelt_cost + band_cost + band_hotmelt_cost + frame_cost + others
 
-  return (
-    <div className="min-h-screen bg-slate-100 text-slate-900">
-      <div className="mx-auto max-w-md space-y-4 p-4 pb-10">
-        <div className="rounded-3xl bg-slate-900 p-5 text-white shadow-lg">
-          <div className="text-xl font-bold">필터 원가 계산기</div>
-          <div className="mt-1 text-sm text-slate-300">제품군별로 화면과 계산식이 바뀌는 버전</div>
-        </div>
+        loss_cost = material_cost * (loss_rate / 100)
+        subtotal_after_loss = material_cost + loss_cost
+        labor_cost = subtotal_after_loss * (labor_rate / 100)
+        sgna_cost = subtotal_after_loss * (sgna_rate / 100)
+        interest_cost = subtotal_after_loss * (interest_rate / 100)
+        total_cost = subtotal_after_loss + labor_cost + sgna_cost + interest_cost
+        selling_price = total_cost * (1 + margin_rate / 100)
 
-        <Card title="제품군 선택">
-          <div className="flex gap-2">
-            <SegButton active={productGroup === "INDUSTRIAL"} onClick={() => setProductGroup("INDUSTRIAL")}>산업용</SegButton>
-            <SegButton active={productGroup === "HOME_FLAT"} onClick={() => setProductGroup("HOME_FLAT")}>가정용 평판</SegButton>
-            <SegButton active={productGroup === "HOME_CYL"} onClick={() => setProductGroup("HOME_CYL")}>가정용 원형</SegButton>
-          </div>
-        </Card>
+        st.markdown("### 계산 결과")
+        st.write(f"팩 가로: {pack_width:.0f} mm")
+        st.write(f"팩 세로: {pack_height:.0f} mm")
+        st.write(f"팩 두께: {pack_depth:.0f} mm")
+        st.write(f"원단면적: {media_area:.4f} ㎡")
+        st.write(f"원단원가: {money(media_cost)}")
+        st.write(f"핫멜트 라인수: {hotmelt_lines}")
+        st.write(f"핫멜트원가: {money(hotmelt_cost)}")
+        st.write(f"띠밴드 길이: {band_length_m:.2f} m")
+        st.write(f"띠밴드원가: {money(band_cost)}")
+        st.write(f"띠밴드 핫멜트 무게: {band_hotmelt_weight_kg:.4f} kg")
+        st.write(f"띠밴드 핫멜트원가: {money(band_hotmelt_cost)}")
+        st.write(f"기타 부자재 합: {money(others)}")
+        st.write(f"재료비 합계: {money(material_cost)}")
+        st.write(f"로스비용: {money(loss_cost)}")
+        st.write(f"인건비: {money(labor_cost)}")
+        st.write(f"판관비: {money(sgna_cost)}")
+        st.write(f"이자비용: {money(interest_cost)}")
+        st.write(f"총원가: {money(total_cost)}")
+        st.success(f"판매가: {money(selling_price)}")
 
-        {productGroup === "INDUSTRIAL" && (
-          <>
-            <Card title="필터 타입 선택">
-              <div className="flex gap-2">
-                <SegButton active={filterType === "MINI"} onClick={() => setFilterType("MINI")}>MINI TYPE</SegButton>
-                <SegButton active={filterType === "SEPARATOR"} onClick={() => setFilterType("SEPARATOR")}>SEPARATOR TYPE</SegButton>
-              </div>
-            </Card>
+# -----------------------------
+# 가정용 원형
+# -----------------------------
+else:
+    st.subheader("가정용 원형 원가설정")
+    media_unit_cost = st.number_input("원단 단가 (원/㎡)", min_value=0.0, value=12000.0, step=100.0, key="cyl_media")
+    hotmelt_unit_cost = st.number_input("핫멜트 단가 (원/kg)", min_value=0.0, value=3900.0, step=100.0, key="cyl_hotmelt")
 
-            <Card title="여재 종류 선택">
-              <div className="flex gap-2">
-                <SegButton active={mediaType === "SYNTHETIC"} onClick={() => setMediaType("SYNTHETIC")}>SYNTHETIC</SegButton>
-                <SegButton active={mediaType === "GLASS"} onClick={() => setMediaType("GLASS")}>GLASS</SegButton>
-              </div>
-            </Card>
+    st.subheader("가정용 원형 기본 입력")
+    c1, c2 = st.columns(2)
+    with c1:
+        width = st.number_input("팩 가로(mm)", min_value=0.0, value=300.0, step=1.0, key="cyl_width")
+        height = st.number_input("팩 세로(mm)", min_value=0.0, value=300.0, step=1.0, key="cyl_height")
+    with c2:
+        depth = st.number_input("팩 두께(mm)", min_value=0.0, value=20.0, step=1.0, key="cyl_depth")
+        pleat_count = st.number_input("산수", min_value=0.0, value=50.0, step=1.0, key="cyl_pleat")
 
-            <Card title="원재료 원가설정">
-              {mediaType === "SYNTHETIC" ? (
-                <Field label="신세틱 원단 단가 (원/㎡)" value={industrial.syntheticUnitCost} onChange={(v) => setIndustrialField("syntheticUnitCost", v)} />
-              ) : (
-                <Field label="글라스 원단 단가 (원/kg)" value={industrial.glassUnitCost} onChange={(v) => setIndustrialField("glassUnitCost", v)} />
-              )}
-              <Field label="우레탄 단가 (원/kg)" value={industrial.urethaneUnitCost} onChange={(v) => setIndustrialField("urethaneUnitCost", v)} />
-              {filterType === "MINI" && <Field label="핫멜트 단가 (원/kg)" value={industrial.hotmeltUnitCost} onChange={(v) => setIndustrialField("hotmeltUnitCost", v)} />}
-              {filterType === "SEPARATOR" && <Field label="호일 단가 (원/kg)" value={industrial.foilUnitCost} onChange={(v) => setIndustrialField("foilUnitCost", v)} />}
-            </Card>
+    st.subheader("가정용 원형 부자재")
+    gasket_cost = st.number_input("가스켓 금액(원)", min_value=0.0, value=0.0, step=100.0, key="cyl_gasket")
+    honeycomb_cost = st.number_input("종이허니컴 금액(원)", min_value=0.0, value=0.0, step=100.0, key="cyl_honeycomb")
+    carbon_nonwoven_cost = st.number_input("카본부직포 금액(원)", min_value=0.0, value=0.0, step=100.0, key="cyl_carbon")
+    mesh_cost = st.number_input("망 금액(원)", min_value=0.0, value=0.0, step=100.0, key="cyl_mesh")
+    cap_cost = st.number_input("캡 금액(원)", min_value=0.0, value=0.0, step=100.0, key="cyl_cap")
+    air_through_cost = st.number_input("에어스루 금액(원)", min_value=0.0, value=0.0, step=100.0, key="cyl_air")
+    vinyl_cost = st.number_input("비닐 금액(원)", min_value=0.0, value=0.0, step=100.0, key="cyl_vinyl")
+    box_cost = st.number_input("박스 금액(원)", min_value=0.0, value=0.0, step=100.0, key="cyl_box")
 
-            <Card title="기본 입력">
-              <Field label="가로(mm)" value={industrial.width} onChange={(v) => setIndustrialField("width", v)} />
-              <Field label="세로(mm)" value={industrial.height} onChange={(v) => setIndustrialField("height", v)} />
-              <Field label="두께(mm)" value={industrial.depth} onChange={(v) => setIndustrialField("depth", v)} />
-              <Field label="산수" value={industrial.pleatCount} onChange={(v) => setIndustrialField("pleatCount", v)} />
-              <Field label="팩두께(mm)" value={industrial.packDepth} onChange={(v) => setIndustrialField("packDepth", v)} />
-              <Field label="팩높이(mm)" value={industrial.packHeight} onChange={(v) => setIndustrialField("packHeight", v)} />
-              <Field label="프레임 단가(원)" value={industrial.frameCost} onChange={(v) => setIndustrialField("frameCost", v)} />
-              <Field label="박스 비용(원)" value={industrial.boxCost} onChange={(v) => setIndustrialField("boxCost", v)} />
-              <Field label="비닐 비용(원)" value={industrial.vinylCost} onChange={(v) => setIndustrialField("vinylCost", v)} />
-            </Card>
+    st.subheader("비율 설정")
+    r1, r2, r3, r4, r5 = st.columns(5)
+    with r1:
+        loss_rate = st.number_input("로스(%)", min_value=0.0, value=5.0, step=1.0, key="cyl_loss")
+    with r2:
+        labor_rate = st.number_input("인건비(%)", min_value=0.0, value=30.0, step=1.0, key="cyl_labor")
+    with r3:
+        sgna_rate = st.number_input("판관비(%)", min_value=0.0, value=15.0, step=1.0, key="cyl_sgna")
+    with r4:
+        interest_rate = st.number_input("이자비용(%)", min_value=0.0, value=9.0, step=1.0, key="cyl_interest")
+    with r5:
+        margin_rate = st.number_input("마진(%)", min_value=0.0, value=20.0, step=1.0, key="cyl_margin")
 
-            <Card title="부자재 입력">
-              <div className="grid grid-cols-2 gap-3">
-                <Field label="부자재1 이름" type="text" value={industrial.sub1Name} onChange={(v) => setIndustrialField("sub1Name", v)} />
-                <Field label="부자재1 금액(원)" value={industrial.sub1Cost} onChange={(v) => setIndustrialField("sub1Cost", v)} />
-                <Field label="부자재2 이름" type="text" value={industrial.sub2Name} onChange={(v) => setIndustrialField("sub2Name", v)} />
-                <Field label="부자재2 금액(원)" value={industrial.sub2Cost} onChange={(v) => setIndustrialField("sub2Cost", v)} />
-                <Field label="부자재3 이름" type="text" value={industrial.sub3Name} onChange={(v) => setIndustrialField("sub3Name", v)} />
-                <Field label="부자재3 금액(원)" value={industrial.sub3Cost} onChange={(v) => setIndustrialField("sub3Cost", v)} />
-                <Field label="부자재4 이름" type="text" value={industrial.sub4Name} onChange={(v) => setIndustrialField("sub4Name", v)} />
-                <Field label="부자재4 금액(원)" value={industrial.sub4Cost} onChange={(v) => setIndustrialField("sub4Cost", v)} />
-                <Field label="부자재5 이름" type="text" value={industrial.sub5Name} onChange={(v) => setIndustrialField("sub5Name", v)} />
-                <Field label="부자재5 금액(원)" value={industrial.sub5Cost} onChange={(v) => setIndustrialField("sub5Cost", v)} />
-                <Field label="부자재6 이름" type="text" value={industrial.sub6Name} onChange={(v) => setIndustrialField("sub6Name", v)} />
-                <Field label="부자재6 금액(원)" value={industrial.sub6Cost} onChange={(v) => setIndustrialField("sub6Cost", v)} />
-              </div>
-            </Card>
+    if st.button("가정용 원형 계산하기", use_container_width=True):
+        media_area = (pleat_count * 2 * height * depth) / 1_000_000
+        media_cost = media_area * media_unit_cost
 
-            <Card title="비율 설정">
-              <Field label="로스(%)" value={industrial.lossRate} onChange={(v) => setIndustrialField("lossRate", v)} />
-              <Field label="인건비(%)" value={industrial.laborRate} onChange={(v) => setIndustrialField("laborRate", v)} />
-              <Field label="판관비(%)" value={industrial.sgnaRate} onChange={(v) => setIndustrialField("sgnaRate", v)} />
-              <Field label="이자비용(%)" value={industrial.interestRate} onChange={(v) => setIndustrialField("interestRate", v)} />
-              <Field label="마진(%)" value={industrial.marginRate} onChange={(v) => setIndustrialField("marginRate", v)} />
-            </Card>
+        hotmelt_lines = math.ceil(height / 25) if height > 0 else 0
+        hotmelt_length_mm = hotmelt_lines * pleat_count * depth
+        hotmelt_length_m = hotmelt_length_mm / 1000
+        hotmelt_weight_g = hotmelt_length_m * 2
+        hotmelt_cost = (hotmelt_weight_g / 1000) * hotmelt_unit_cost
 
-            <Card title="산업용 계산 결과">
-              {industrialResults.separatorError && <div className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-700">{industrialResults.separatorError}</div>}
-              <Row label="여재면적" value={`${fixed(industrialResults.mediaArea, 4)} ㎡`} />
-              <Row label="여재무게" value={mediaType === "GLASS" ? `${fixed(industrialResults.mediaWeight, 4)} kg` : "-"} />
-              <Row label="여재원가" value={money(industrialResults.mediaCost)} />
-              {filterType === "SEPARATOR" && <Row label="호일무게" value={`${fixed(industrialResults.foilWeight, 4)} kg`} />}
-              {filterType === "SEPARATOR" && <Row label="호일원가" value={money(industrialResults.foilCost)} />}
-              <Row label="우레탄원가" value={money(industrialResults.urethaneCost)} />
-              {filterType === "MINI" && <Row label="핫멜트원가" value={money(industrialResults.hotmeltCost)} />}
-              <Row label="프레임원가" value={money(industrialResults.frameCost)} />
-              <Row label="부자재합" value={money(industrialResults.subTotal)} />
-              <div className="my-2 h-px bg-slate-200" />
-              <Row label="재료비 합계" value={money(industrialResults.materialCost)} strong />
-              <Row label="로스비용" value={money(industrialResults.lossCost)} />
-              <Row label="인건비" value={money(industrialResults.laborCost)} />
-              <Row label="판관비" value={money(industrialResults.sgnaCost)} />
-              <Row label="이자비용" value={money(industrialResults.interestCost)} />
-              <Row label="총원가" value={money(industrialResults.totalCost)} strong />
-              <Row label="판매가" value={money(industrialResults.sellingPrice)} strong />
-            </Card>
-          </>
-        )}
+        others = gasket_cost + honeycomb_cost + carbon_nonwoven_cost + mesh_cost + cap_cost + air_through_cost + vinyl_cost + box_cost
+        material_cost = media_cost + hotmelt_cost + others
 
-        {productGroup === "HOME_FLAT" && (
-          <>
-            <Card title="가정용 평판 원가설정">
-              <Field label="원단 단가 (원/㎡)" value={flat.mediaUnitCost} onChange={(v) => setFlatField("mediaUnitCost", v)} />
-              <Field label="핫멜트 단가 (원/kg)" value={flat.hotmeltUnitCost} onChange={(v) => setFlatField("hotmeltUnitCost", v)} />
-              <Field label="띠밴드 단가 (원/m)" value={flat.bandUnitCost} onChange={(v) => setFlatField("bandUnitCost", v)} />
-              <Field label="띠밴드 폭 (mm)" value={flat.bandWidthMm} onChange={(v) => setFlatField("bandWidthMm", v)} />
-            </Card>
+        loss_cost = material_cost * (loss_rate / 100)
+        subtotal_after_loss = material_cost + loss_cost
+        labor_cost = subtotal_after_loss * (labor_rate / 100)
+        sgna_cost = subtotal_after_loss * (sgna_rate / 100)
+        interest_cost = subtotal_after_loss * (interest_rate / 100)
+        total_cost = subtotal_after_loss + labor_cost + sgna_cost + interest_cost
+        selling_price = total_cost * (1 + margin_rate / 100)
 
-            <Card title="가정용 평판 기본 입력">
-              <Field label="가로(mm)" value={flat.width} onChange={(v) => setFlatField("width", v)} />
-              <Field label="세로(mm)" value={flat.height} onChange={(v) => setFlatField("height", v)} />
-              <Field label="두께(mm)" value={flat.depth} onChange={(v) => setFlatField("depth", v)} />
-              <Field label="산수" value={flat.pleatCount} onChange={(v) => setFlatField("pleatCount", v)} />
-              <Field label="프레임 단가(원)" value={flat.frameCost} onChange={(v) => setFlatField("frameCost", v)} />
-            </Card>
-
-            <Card title="가정용 평판 부자재">
-              <Field label="탈취 금액(원)" value={flat.deodorantCost} onChange={(v) => setFlatField("deodorantCost", v)} />
-              <Field label="가스켓 금액(원)" value={flat.gasketCost} onChange={(v) => setFlatField("gasketCost", v)} />
-              <Field label="인쇄부직포 금액(원)" value={flat.printNonwovenCost} onChange={(v) => setFlatField("printNonwovenCost", v)} />
-              <Field label="비닐 금액(원)" value={flat.vinylCost} onChange={(v) => setFlatField("vinylCost", v)} />
-              <Field label="에어스루 금액(원)" value={flat.airThroughCost} onChange={(v) => setFlatField("airThroughCost", v)} />
-              <Field label="박스 금액(원)" value={flat.boxCost} onChange={(v) => setFlatField("boxCost", v)} />
-            </Card>
-
-            <Card title="가정용 평판 비율 설정">
-              <Field label="로스(%)" value={flat.lossRate} onChange={(v) => setFlatField("lossRate", v)} />
-              <Field label="인건비(%)" value={flat.laborRate} onChange={(v) => setFlatField("laborRate", v)} />
-              <Field label="판관비(%)" value={flat.sgnaRate} onChange={(v) => setFlatField("sgnaRate", v)} />
-              <Field label="이자비용(%)" value={flat.interestRate} onChange={(v) => setFlatField("interestRate", v)} />
-              <Field label="마진(%)" value={flat.marginRate} onChange={(v) => setFlatField("marginRate", v)} />
-            </Card>
-
-            <Card title="가정용 평판 계산 결과">
-              <Row label="팩 가로" value={`${fixed(flatResults.packWidth, 0)} mm`} />
-              <Row label="팩 세로" value={`${fixed(flatResults.packHeight, 0)} mm`} />
-              <Row label="팩 두께" value={`${fixed(flatResults.packDepth, 0)} mm`} />
-              <Row label="원단면적" value={`${fixed(flatResults.mediaArea, 4)} ㎡`} />
-              <Row label="원단원가" value={money(flatResults.mediaCost)} />
-              <Row label="핫멜트 라인수" value={String(flatResults.hotmeltLines)} />
-              <Row label="핫멜트원가" value={money(flatResults.hotmeltCost)} />
-              <Row label="띠밴드 길이" value={`${fixed(flatResults.bandLengthM, 2)} m`} />
-              <Row label="띠밴드원가" value={money(flatResults.bandCost)} />
-              <Row label="띠밴드 핫멜트 무게" value={`${fixed(flatResults.bandHotmeltWeightKg, 4)} kg`} />
-              <Row label="띠밴드 핫멜트원가" value={money(flatResults.bandHotmeltCost)} />
-              <Row label="기타 부자재 합" value={money(flatResults.others)} />
-              <div className="my-2 h-px bg-slate-200" />
-              <Row label="재료비 합계" value={money(flatResults.materialCost)} strong />
-              <Row label="로스비용" value={money(flatResults.lossCost)} />
-              <Row label="인건비" value={money(flatResults.laborCost)} />
-              <Row label="판관비" value={money(flatResults.sgnaCost)} />
-              <Row label="이자비용" value={money(flatResults.interestCost)} />
-              <Row label="총원가" value={money(flatResults.totalCost)} strong />
-              <Row label="판매가" value={money(flatResults.sellingPrice)} strong />
-            </Card>
-          </>
-        )}
-
-        {productGroup === "HOME_CYL" && (
-          <>
-            <Card title="가정용 원형 원가설정">
-              <Field label="원단 단가 (원/㎡)" value={cyl.mediaUnitCost} onChange={(v) => setCylField("mediaUnitCost", v)} />
-              <Field label="핫멜트 단가 (원/kg)" value={cyl.hotmeltUnitCost} onChange={(v) => setCylField("hotmeltUnitCost", v)} />
-            </Card>
-
-            <Card title="가정용 원형 기본 입력">
-              <Field label="팩 가로(mm)" value={cyl.width} onChange={(v) => setCylField("width", v)} />
-              <Field label="팩 세로(mm)" value={cyl.height} onChange={(v) => setCylField("height", v)} />
-              <Field label="팩 두께(mm)" value={cyl.depth} onChange={(v) => setCylField("depth", v)} />
-              <Field label="산수" value={cyl.pleatCount} onChange={(v) => setCylField("pleatCount", v)} />
-            </Card>
-
-            <Card title="가정용 원형 부자재">
-              <Field label="가스켓 금액(원)" value={cyl.gasketCost} onChange={(v) => setCylField("gasketCost", v)} />
-              <Field label="종이허니컴 금액(원)" value={cyl.honeycombCost} onChange={(v) => setCylField("honeycombCost", v)} />
-              <Field label="카본부직포 금액(원)" value={cyl.carbonNonwovenCost} onChange={(v) => setCylField("carbonNonwovenCost", v)} />
-              <Field label="망 금액(원)" value={cyl.meshCost} onChange={(v) => setCylField("meshCost", v)} />
-              <Field label="캡 금액(원)" value={cyl.capCost} onChange={(v) => setCylField("capCost", v)} />
-              <Field label="에어스루 금액(원)" value={cyl.airThroughCost} onChange={(v) => setCylField("airThroughCost", v)} />
-              <Field label="비닐 금액(원)" value={cyl.vinylCost} onChange={(v) => setCylField("vinylCost", v)} />
-              <Field label="박스 금액(원)" value={cyl.boxCost} onChange={(v) => setCylField("boxCost", v)} />
-            </Card>
-
-            <Card title="가정용 원형 비율 설정">
-              <Field label="로스(%)" value={cyl.lossRate} onChange={(v) => setCylField("lossRate", v)} />
-              <Field label="인건비(%)" value={cyl.laborRate} onChange={(v) => setCylField("laborRate", v)} />
-              <Field label="판관비(%)" value={cyl.sgnaRate} onChange={(v) => setCylField("sgnaRate", v)} />
-              <Field label="이자비용(%)" value={cyl.interestRate} onChange={(v) => setCylField("interestRate", v)} />
-              <Field label="마진(%)" value={cyl.marginRate} onChange={(v) => setCylField("marginRate", v)} />
-            </Card>
-
-            <Card title="가정용 원형 계산 결과">
-              <Row label="원단면적" value={`${fixed(cylResults.mediaArea, 4)} ㎡`} />
-              <Row label="원단원가" value={money(cylResults.mediaCost)} />
-              <Row label="핫멜트 라인수" value={String(cylResults.hotmeltLines)} />
-              <Row label="핫멜트원가" value={money(cylResults.hotmeltCost)} />
-              <Row label="기타 부자재 합" value={money(cylResults.others)} />
-              <div className="my-2 h-px bg-slate-200" />
-              <Row label="재료비 합계" value={money(cylResults.materialCost)} strong />
-              <Row label="로스비용" value={money(cylResults.lossCost)} />
-              <Row label="인건비" value={money(cylResults.laborCost)} />
-              <Row label="판관비" value={money(cylResults.sgnaCost)} />
-              <Row label="이자비용" value={money(cylResults.interestCost)} />
-              <Row label="총원가" value={money(cylResults.totalCost)} strong />
-              <Row label="판매가" value={money(cylResults.sellingPrice)} strong />
-            </Card>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
+        st.markdown("### 계산 결과")
+        st.write(f"원단면적: {media_area:.4f} ㎡")
+        st.write(f"원단원가: {money(media_cost)}")
+        st.write(f"핫멜트 라인수: {hotmelt_lines}")
+        st.write(f"핫멜트 길이: {hotmelt_length_m:.2f} m")
+        st.write(f"핫멜트 무게: {hotmelt_weight_g:.2f} g")
+        st.write(f"핫멜트원가: {money(hotmelt_cost)}")
+        st.write(f"기타 부자재 합: {money(others)}")
+        st.write(f"재료비 합계: {money(material_cost)}")
+        st.write(f"로스비용: {money(loss_cost)}")
+        st.write(f"인건비: {money(labor_cost)}")
+        st.write(f"판관비: {money(sgna_cost)}")
+        st.write(f"이자비용: {money(interest_cost)}")
+        st.write(f"총원가: {money(total_cost)}")
+        st.success(f"판매가: {money(selling_price)}")
