@@ -70,12 +70,12 @@ if product_group == "산업용":
     st.markdown("### 부자재")
     s1, s2 = st.columns(2)
     with s1:
-        sub1_name = st.text_input("부자재1 이름", value="탈취")
+        sub1_name = st.text_input("부자재1 이름", value="박스")
         sub2_name = st.text_input("부자재2 이름", value="가스켓")
-        sub3_name = st.text_input("부자재3 이름", value="인쇄부직포")
-        sub4_name = st.text_input("부자재4 이름", value="비닐")
-        sub5_name = st.text_input("부자재5 이름", value="에어스루")
-        sub6_name = st.text_input("부자재6 이름", value="박스")
+        sub3_name = st.text_input("부자재3 이름", value="비닐")
+        sub4_name = st.text_input("부자재4 이름", value="기타")
+        sub5_name = st.text_input("부자재5 이름", value="기타")
+        sub6_name = st.text_input("부자재6 이름", value="기타")
     with s2:
         sub1_cost = st.number_input("부자재1 금액(원)", min_value=0.0, value=0.0, step=100.0)
         sub2_cost = st.number_input("부자재2 금액(원)", min_value=0.0, value=0.0, step=100.0)
